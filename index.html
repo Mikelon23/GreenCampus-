@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GreenCampus+</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'base-100': '#1d232a',
+              'base-200': '#191e24',
+              'base-300': '#15191e',
+              'primary': '#34d399', // Emerald 400
+              'secondary': '#fbbf24', // Amber 400
+              'danger': '#f87171', // Red 400
+            },
+            keyframes: {
+              'fade-in-down': {
+                '0%': {
+                  opacity: '0',
+                  transform: 'translateY(-10px)'
+                },
+                '100%': {
+                  opacity: '1',
+                  transform: 'translateY(0)'
+                },
+              }
+            },
+            animation: {
+              'fade-in-down': 'fade-in-down 0.5s ease-out'
+            }
+          },
+        },
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/messaging": "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/"
+  }
+}
+</script>
+</head>
+  <body class="bg-base-300 text-gray-200">
+    <div id="root"></div>
+  </body>
+</html>

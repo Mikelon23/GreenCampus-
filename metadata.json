@@ -1,0 +1,5 @@
+{
+  "name": "GreenCampus+",
+  "description": "A web-based platform that monitors environmental indicators in universities (temperature, humidity, CO₂, and energy usage) to promote sustainable campuses.",
+  "requestFramePermissions": []
+}
