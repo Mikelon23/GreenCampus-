@@ -7,8 +7,6 @@ import SummaryCard from './components/SummaryCard';
 import { useSimulatedApi } from './hooks/useSimulatedApi';
 import { CO2Icon, EnergyIcon, HumidityIcon, TemperatureIcon, LeafIcon, ClockIcon } from './components/Icons';
 import { useAuth } from './AuthContext';
-import LoginPage from './LoginPage';
-import SignupPage from './SignupPage';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { app, VAPID_KEY, isFirebaseConfigured } from './firebaseConfig';
 
@@ -225,26 +223,6 @@ const Dashboard: React.FC = () => {
 }
 
 const App: React.FC = () => {
-  const { user, loading: authIsLoading } = useAuth();
-  const [view, setView] = useState<'login' | 'signup'>('login');
-
-  if (authIsLoading) {
-     return (
-      <div className="flex items-center justify-center min-h-screen bg-base-300 text-white">
-        <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-            <h1 className="text-2xl font-bold">Authenticating...</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return view === 'login' 
-      ? <LoginPage onSwitchToSignup={() => setView('signup')} /> 
-      : <SignupPage onSwitchToLogin={() => setView('login')} />;
-  }
-
   return <Dashboard />;
 };
 

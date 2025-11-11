@@ -23,51 +23,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // AuthProvider component that wraps the application
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Only set up the auth state listener if Firebase is configured.
-    if (!isFirebaseConfigured) {
-      setLoading(false);
-      return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, []);
-
-  const signup = (email: string, pass: string) => {
-    if (!isFirebaseConfigured) return Promise.reject(new Error('Firebase is not configured.'));
-    return createUserWithEmailAndPassword(auth, email, pass);
-  };
-
-  const login = (email: string, pass: string) => {
-    if (!isFirebaseConfigured) return Promise.reject(new Error('Firebase is not configured.'));
-    return signInWithEmailAndPassword(auth, email, pass);
-  };
-
-  const logout = () => {
-    if (!isFirebaseConfigured) return Promise.reject(new Error('Firebase is not configured.'));
-    return signOut(auth);
-  };
+  // Mock user to bypass authentication.
+  const mockUser = {
+    email: 'guest@greencampus.plus',
+  } as User;
 
   const value = {
-    user,
-    loading,
-    signup,
-    login,
-    logout,
+    user: mockUser,
+    loading: false, // App is never in an auth loading state
+    signup: async () => {}, // Mock function
+    login: async () => {}, // Mock function
+    logout: async () => {}, // Mock function
   };
   
   // If Firebase isn't configured, show a helpful message instead of the app.
+  // Note: With mock auth, this check is effectively bypassed for the main app flow.
   if (!isFirebaseConfigured) {
     return <FirebaseNotConfigured />;
   }
+
 
   return (
     <AuthContext.Provider value={value}>
