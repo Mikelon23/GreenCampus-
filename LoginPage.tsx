@@ -21,7 +21,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
             await login(email, password);
             // No need to redirect, App.tsx will handle it based on auth state
         } catch (err: any) {
-            setError('Failed to log in. Please check your credentials.');
+            if (err.code === 'auth/operation-not-allowed') {
+                setError('Email/Password sign-in is not enabled. Please enable it in your Firebase Authentication settings.');
+            } else {
+                setError('Failed to log in. Please check your credentials.');
+            }
             console.error(err);
         }
         setLoading(false);

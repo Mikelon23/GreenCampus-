@@ -25,7 +25,9 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
             await signup(email, password);
              // No need to redirect, App.tsx will handle it based on auth state
         } catch (err: any) {
-             if (err.code === 'auth/email-already-in-use') {
+             if (err.code === 'auth/operation-not-allowed') {
+                setError('Email/Password sign-in is not enabled. Please enable it in your Firebase Authentication settings.');
+            } else if (err.code === 'auth/email-already-in-use') {
                 setError('This email is already registered.');
             } else if (err.code === 'auth/weak-password') {
                 setError('Password should be at least 6 characters.');
