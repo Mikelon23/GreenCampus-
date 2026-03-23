@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Local env / secrets
+.env
+.env.*
+
+# Python
+**/__pycache__/
+.pytest_cache/
+.venv/
+venv/
+backend/pytest-cache-files-*/
+backend/pytest-cache-files-*
+backend/_deps/
+backend/_deps_compat/
+
+# Node
+**/node_modules/
+**/.next/
+**/dist/
+**/out/
+
+# Logs
+**/*.log
+**/*.err
+
+# Docs (ignored by repo policy)
+docs/

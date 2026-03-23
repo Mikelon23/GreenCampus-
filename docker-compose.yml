@@ -1,0 +1,96 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: greencampus-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-greencampusplus}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - greencampus_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend-init:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: greencampus-backend-init
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/greencampusplus}
+      JWT_SECRET: ${JWT_SECRET:-change_me}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@campus.edu}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
+    command: >
+      sh -c "python -m backend.utils.wait_for_db &&
+             alembic -c backend/alembic.ini upgrade head &&
+             python -m backend.seed"
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: greencampus-backend
+    restart: unless-stopped
+    depends_on:
+      backend-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/greencampusplus}
+      JWT_SECRET: ${JWT_SECRET:-change_me}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python -m backend.utils.wait_for_db &&
+             uvicorn backend.main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    container_name: greencampus-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+
+  simulator:
+    profiles: ["simulator"]
+    image: python:3.12-slim
+    container_name: greencampus-simulator
+    depends_on:
+      - backend
+    working_dir: /app
+    volumes:
+      - ./simulation:/app/simulation:ro
+    environment:
+      SIM_API_BASE_URL: ${SIM_API_BASE_URL:-http://backend:8000}
+      SIM_INTERVAL_SECONDS: ${SIM_INTERVAL_SECONDS:-5}
+      SIM_ZONE_IDS: ${SIM_ZONE_IDS:-}
+      SIM_AUTH_TOKEN: ${SIM_AUTH_TOKEN:-}
+    command: >
+      sh -c "pip install --no-cache-dir -r simulation/requirements.txt &&
+             python simulation/simulator.py"
+    restart: unless-stopped
+
+volumes:
+  greencampus_db_data:

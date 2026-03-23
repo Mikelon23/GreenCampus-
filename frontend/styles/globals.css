@@ -1,0 +1,19 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Source Sans 3", sans-serif;
+  background: linear-gradient(135deg, #f2f7f4 0%, #e8f0ea 50%, #f8f4e9 100%);
+  color: #0a1a14;
+  min-height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}

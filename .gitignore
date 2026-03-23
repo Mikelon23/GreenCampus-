@@ -1,0 +1,44 @@
+docs/
+*.prompt
+.env
+.env.*
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+backend/_deps/
+backend/_deps_compat/
+backend/pytest-cache-files-*/
+backend/pytest-cache-files-*
+
+# Node / Next
+node_modules/
+.next/
+dist/
+out/
+
+# Logs
+*.log
+*.err
+
+# DB / local artifacts
+*.sqlite3
+*.db
+
+# Uploads (user-provided files)
+backend/uploads/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
