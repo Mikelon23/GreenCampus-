@@ -1,3 +1,4 @@
+docs/
 *.prompt
 .env
 .env.local
