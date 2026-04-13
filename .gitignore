@@ -1,54 +1,117 @@
-docs/
-*.prompt
+# ─── Documentación privada ────────────────────────────────────────
+docs/          # carpeta de specs/diseño local (no se versiona)
+*.prompt       # archivos de prompt de herramientas AI
+
+# ─── Variables de entorno / secretos ──────────────────────────────
 .env
 .env.local
 .env.*.local
 .env.*
-!.env.example
+!.env.example   # plantillas sin secretos → SÍ versionar
 
-# Python
+# ─── Python ───────────────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.pyw
+*.pyz
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .venv/
 venv/
+env/
+.python-version
+
+# Dependencias locales (equivalente a node_modules)
 backend/_deps/
 backend/_deps_compat/
+
+# Caché de pytest
 backend/pytest-cache-files-*/
 backend/pytest-cache-files-*
 
-# Node / Next
+# ─── Node / Next.js ───────────────────────────────────────────────
 node_modules/
 .next/
 dist/
 out/
+build/
+.turbo/
+.swc/
+*.tsbuildinfo
+next-env.d.ts   # generado automáticamente por Next.js
 
-# Logs
+# ─── Docker ───────────────────────────────────────────────────────
+# Los archivos de Docker se versionan, pero no datos de volúmenes
+docker-volumes/
+postgres-data/
+
+# ─── Logs y archivos de runtime ───────────────────────────────────
 *.log
 *.err
+logs/
+uvicorn.*.log
+uvicorn.*.err
+frontend/devserver.log
+frontend/prodserver.log
+frontend/next.dev.*
 
-# DB / local artifacts
+# ─── Base de datos / artefactos locales ───────────────────────────
 *.sqlite3
 *.db
+*.dump
+*.sql.bak
 
-# Uploads (user-provided files)
+# ─── Uploads de usuario (runtime, no código) ──────────────────────
 backend/uploads/
 
-# OS/editor
-.DS_Store
-Thumbs.db
-desktop.ini
-.vscode/
-.idea/
-
-# Coverage / reports
+# ─── Tests / cobertura ────────────────────────────────────────────
 htmlcov/
 .coverage
+.coverage.*
 coverage.xml
+coverage/
+*.coveragerc
 
-# AI tool artifacts
+# ─── OS / Editor ──────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+thumbs.db
+desktop.ini
+ehthumbs.db
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.swp
+*.swo
+*~
+
+# ─── Herramientas AI / generadores ────────────────────────────────
 metadata.json
+.gemini/
+.cursor/
+.aider*
+
+# ─── Certificados / claves ────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# ─── Misc ─────────────────────────────────────────────────────────
+*.bak
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
