@@ -40,5 +40,14 @@ backend/uploads/
 # OS/editor
 .DS_Store
 Thumbs.db
+desktop.ini
 .vscode/
 .idea/
+
+# Coverage / reports
+htmlcov/
+.coverage
+coverage.xml
+
+# AI tool artifacts
+metadata.json
