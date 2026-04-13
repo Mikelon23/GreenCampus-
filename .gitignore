@@ -1,9 +1,9 @@
-docs/
 *.prompt
 .env
-.env.*
 .env.local
 .env.*.local
+.env.*
+!.env.example
 
 # Python
 __pycache__/
