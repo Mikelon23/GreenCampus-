@@ -1,5 +1,18 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+function clearExpiredSession() {
+  if (typeof window === "undefined") return;
+
+  // Token Expiry (60 mins): clear stale JWT state when the API rejects the session.
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.dispatchEvent(new Event("auth:logout"));
+
+  if (window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   let headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -8,7 +21,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
-    if (token) {
+    // Token Expiry (60 mins): never send the literal string "null" as a Bearer token.
+    if (token && token !== "null") {
       headers = {
         ...headers,
         Authorization: `Bearer ${token}`
@@ -32,6 +46,9 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
       }
     } catch {
       // Ignore non-JSON payloads and keep the fallback message.
+    }
+    if (response.status === 401) {
+      clearExpiredSession();
     }
     throw new Error(message);
   }
@@ -321,7 +338,8 @@ export const api = {
     let headers: HeadersInit = {};
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
-      if (token) headers = { Authorization: `Bearer ${token}` };
+      // Token Expiry (60 mins): never upload with an expired/null JWT placeholder.
+      if (token && token !== "null") headers = { Authorization: `Bearer ${token}` };
     }
 
     const response = await fetch(`${API_BASE}/api/projects/${projectId}/upload`, {
@@ -330,6 +348,9 @@ export const api = {
       headers
     });
     if (!response.ok) {
+      if (response.status === 401) {
+        clearExpiredSession();
+      }
       throw new Error("Upload failed");
     }
     return response.json();

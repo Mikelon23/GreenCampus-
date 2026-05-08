@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Layout from "../components/Layout";
 import SectionHeader from "../components/SectionHeader";
 import { api } from "../services/api";
@@ -11,25 +11,47 @@ type CarbonRecord = {
   recorded_at: string;
 };
 
-const activityOptions = [
-  { label: "Car commute", value: "Car commute", estimate: 4.25 },
-  { label: "Motorbike commute", value: "Motorbike commute", estimate: 2.8 },
-  { label: "Bus commute", value: "Bus commute", estimate: 1.15 },
-  { label: "Short-haul flight", value: "Short-haul flight", estimate: 90.0 },
-  { label: "High-energy lab session", value: "High-energy lab session", estimate: 6.5 }
+type TransportOption = {
+  label: string;
+  value: string;
+  factor: number;
+  rewardAction?: string;
+};
+
+const CAR_FACTOR = 0.192;
+const EDIT_WINDOW_MS = 30 * 60 * 1000;
+
+const transportOptions: TransportOption[] = [
+  { label: "Carro Particular", value: "car", factor: CAR_FACTOR },
+  { label: "Motocicleta", value: "motorbike", factor: 0.103 },
+  { label: "Transporte Publico", value: "public", factor: 0.082, rewardAction: "public transport commute" },
+  { label: "Bicicleta / Caminar", value: "active", factor: 0, rewardAction: "active transport commute" }
 ];
 
 export default function CarbonPage() {
   const { user, loading: authLoading } = useAuth();
   const [records, setRecords] = useState<CarbonRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activityType, setActivityType] = useState(activityOptions[0].value);
-  const [carbonEstimate, setCarbonEstimate] = useState(activityOptions[0].estimate.toString());
+  const [kilometers, setKilometers] = useState("");
+  const [transport, setTransport] = useState(transportOptions[0].value);
+  const [editActivityType, setEditActivityType] = useState("");
+  const [editCarbonEstimate, setEditCarbonEstimate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [result, setResult] = useState<{ emitted: number; saved: number; points: number } | null>(null);
 
-  const EDIT_WINDOW_MS = 30 * 60 * 1000;
+  const selectedTransport = useMemo(
+    () => transportOptions.find((option) => option.value === transport) || transportOptions[0],
+    [transport]
+  );
+
+  const calculated = useMemo(() => {
+    const km = Math.max(0, Number(kilometers) || 0);
+    const emitted = km * selectedTransport.factor;
+    const saved = Math.max(0, km * CAR_FACTOR - emitted);
+    return { km, emitted, saved };
+  }, [kilometers, selectedTransport]);
 
   const loadData = async () => {
     if (!user) {
@@ -54,39 +76,53 @@ export default function CarbonPage() {
     }
   }, [user, authLoading]);
 
-  const handleActivityChange = (value: string) => {
-    setActivityType(value);
-    const selected = activityOptions.find((option) => option.value === value);
-    if (selected) {
-      setCarbonEstimate(selected.estimate.toString());
-    }
-  };
-
   const resetForm = () => {
-    setActivityType(activityOptions[0].value);
-    setCarbonEstimate(activityOptions[0].estimate.toString());
+    setKilometers("");
+    setTransport(transportOptions[0].value);
+    setEditActivityType("");
+    setEditCarbonEstimate("");
     setEditingRecordId(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setSubmitting(true);
     setError("");
+    setResult(null);
     try {
       if (editingRecordId) {
         await api.updateCarbonRecord(editingRecordId, {
-          activity_type: activityType,
-          carbon_emission_estimate: parseFloat(carbonEstimate)
+          activity_type: editActivityType,
+          carbon_emission_estimate: parseFloat(editCarbonEstimate)
         });
-      } else {
-        await api.createCarbonRecord({
-          user_id: user.id,
-          activity_type: activityType,
-          carbon_emission_estimate: parseFloat(carbonEstimate)
-        });
+        resetForm();
+        await loadData();
+        return;
       }
+
+      if (calculated.km <= 0) {
+        throw new Error("Enter a distance greater than 0 km.");
+      }
+
+      // Major change: carbon is calculated from transport mode instead of typed manually.
+      await api.createCarbonRecord({
+        user_id: user.id,
+        activity_type: `${selectedTransport.label} - ${calculated.km.toFixed(1)} km`,
+        carbon_emission_estimate: calculated.emitted
+      });
+
+      let points = 0;
+      if (selectedTransport.rewardAction) {
+        const action = await api.logAction({
+          user_id: user.id,
+          action_type: selectedTransport.rewardAction
+        });
+        points = action.points_awarded;
+      }
+
+      setResult({ emitted: calculated.emitted, saved: calculated.saved, points });
       resetForm();
       await loadData();
     } catch (err: any) {
@@ -101,8 +137,9 @@ export default function CarbonPage() {
 
   const startEdit = (record: CarbonRecord) => {
     setEditingRecordId(record.id);
-    setActivityType(record.activity_type);
-    setCarbonEstimate(record.carbon_emission_estimate.toString());
+    setEditActivityType(record.activity_type);
+    setEditCarbonEstimate(record.carbon_emission_estimate.toString());
+    setResult(null);
   };
 
   const handleDelete = async (record: CarbonRecord) => {
@@ -122,7 +159,7 @@ export default function CarbonPage() {
     <Layout>
       <SectionHeader
         title="Carbon Tracker"
-        subtitle="Monitor personal carbon footprint activities"
+        subtitle="Calculate transport emissions and earn Green Points for low-carbon mobility."
       />
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-3xl bg-white/90 p-6 shadow-sm">
@@ -139,6 +176,14 @@ export default function CarbonPage() {
               </p>
               {error ? (
                 <div className="mt-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</div>
+              ) : null}
+              {result ? (
+                <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                  <p className="font-semibold">Trip registered</p>
+                  <p>CO2 emitted: {result.emitted.toFixed(2)} kg</p>
+                  <p>CO2 saved vs car: {result.saved.toFixed(2)} kg</p>
+                  <p>Green Points earned: {result.points}</p>
+                </div>
               ) : null}
               <div className="mt-4 space-y-3">
                 {records.map((record) => (
@@ -182,45 +227,86 @@ export default function CarbonPage() {
 
         <div className="rounded-3xl bg-campus-800 p-6 text-white shadow-sm">
           <SectionHeader
-            title={editingRecordId ? "Edit Activity" : "Register Activity"}
-            subtitle="Log an activity and keep your carbon history up to date."
+            title={editingRecordId ? "Edit Activity" : "Transport Calculator"}
+            subtitle="Estimate emissions from commute distance and mobility mode."
           />
           {!user ? (
-            <p className="text-sm text-campus-100/90">Sign in to register carbon activities.</p>
+            <p className="text-sm text-campus-100/90">Sign in to calculate trips and earn points.</p>
           ) : (
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-campus-100">Activity</label>
-                <select
-                  value={activityType}
-                  onChange={(e) => handleActivityChange(e.target.value)}
-                  className="w-full rounded-xl border border-campus-600 bg-campus-700/70 px-4 py-3 text-white outline-none focus:border-campus-300"
-                >
-                  {activityOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-campus-100">Estimated kg CO2</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={carbonEstimate}
-                  onChange={(e) => setCarbonEstimate(e.target.value)}
-                  className="w-full rounded-xl border border-campus-600 bg-campus-700/70 px-4 py-3 text-white outline-none focus:border-campus-300"
-                />
-              </div>
+              {editingRecordId ? (
+                <>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-campus-100">Activity</label>
+                    <input
+                      required
+                      value={editActivityType}
+                      onChange={(e) => setEditActivityType(e.target.value)}
+                      className="w-full rounded-xl border border-campus-600 bg-campus-700/70 px-4 py-3 text-white outline-none focus:border-campus-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-campus-100">Estimated kg CO2</label>
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editCarbonEstimate}
+                      onChange={(e) => setEditCarbonEstimate(e.target.value)}
+                      className="w-full rounded-xl border border-campus-600 bg-campus-700/70 px-4 py-3 text-white outline-none focus:border-campus-300"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-campus-100">Kilometros recorridos</label>
+                    <input
+                      required
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      value={kilometers}
+                      onChange={(e) => setKilometers(e.target.value)}
+                      className="w-full rounded-xl border border-campus-600 bg-campus-700/70 px-4 py-3 text-white outline-none focus:border-campus-300"
+                      placeholder="Example: 8.5"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-campus-100">Medio de Transporte</label>
+                    <select
+                      value={transport}
+                      onChange={(e) => setTransport(e.target.value)}
+                      className="w-full rounded-xl border border-campus-600 bg-campus-700/70 px-4 py-3 text-white outline-none focus:border-campus-300"
+                    >
+                      {transportOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="rounded-2xl bg-campus-900/60 p-4 text-sm text-campus-50">
+                    <p>CO2 estimado: {calculated.emitted.toFixed(2)} kg</p>
+                    <p>Ahorro vs carro: {calculated.saved.toFixed(2)} kg</p>
+                    <p>
+                      Puntos:{" "}
+                      {selectedTransport.rewardAction
+                        ? "se otorgaran al guardar"
+                        : "no aplica para este medio"}
+                    </p>
+                  </div>
+                </>
+              )}
+
               <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
                   disabled={submitting}
                   className="rounded-xl bg-campus-300 px-6 py-3 font-semibold text-campus-900 transition hover:bg-campus-200 disabled:opacity-50"
                 >
-                  {submitting ? "Saving..." : editingRecordId ? "Update activity" : "Add carbon activity"}
+                  {submitting ? "Saving..." : editingRecordId ? "Update activity" : "Register trip"}
                 </button>
                 {editingRecordId ? (
                   <button

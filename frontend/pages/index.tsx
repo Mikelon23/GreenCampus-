@@ -33,28 +33,25 @@ export default function DashboardPage() {
       return {
         temperature: "--",
         humidity: "--",
-        co2: "--",
-        energy: "--"
+        co2: "--"
       };
     }
 
     const total = last24Hours.reduce(
-      (acc: { t: number; h: number; c: number; e: number }, item: SensorData) => {
+      (acc: { t: number; h: number; c: number }, item: SensorData) => {
         acc.t += item.temperature;
         acc.h += item.humidity;
         acc.c += item.co2_level;
-        acc.e += item.energy_usage;
         return acc;
       },
-      { t: 0, h: 0, c: 0, e: 0 }
+      { t: 0, h: 0, c: 0 }
     );
     const count = last24Hours.length;
 
     return {
       temperature: `${(total.t / count).toFixed(1)}\u00b0C`,
       humidity: `${(total.h / count).toFixed(1)}%`,
-      co2: `${(total.c / count).toFixed(0)} ppm`,
-      energy: `${(total.e / count).toFixed(0)} kWh`
+      co2: `${(total.c / count).toFixed(0)} ppm`
     };
   }, [sensors]);
 
@@ -72,18 +69,16 @@ export default function DashboardPage() {
         }),
         temperature: item.temperature,
         humidity: item.humidity,
-        co2: item.co2_level,
-        energy: item.energy_usage
+        co2: item.co2_level
       }));
   }, [sensors]);
 
   return (
     <Layout>
-      <div className="grid gap-6 lg:grid-cols-4">
+      <div className="grid gap-6 lg:grid-cols-3">
         <StatCard title="Avg Temperature" value={stats.temperature} subtitle="Last 24h" />
         <StatCard title="Avg Humidity" value={stats.humidity} subtitle="Last 24h" />
         <StatCard title="Avg CO2" value={stats.co2} subtitle="Last 24h" />
-        <StatCard title="Avg Energy" value={stats.energy} subtitle="Last 24h" />
       </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-3">

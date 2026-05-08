@@ -20,6 +20,10 @@ DEFAULT_ACTION_POINTS = {
     "refill station visit": 20,
     "waste sorting": 35,
     "lab energy shutdown": 40,
+    "active transport commute": 60,
+    "smart recycling plastic": 30,
+    "smart recycling paper": 25,
+    "smart recycling glass": 35,
 }
 
 DEFAULT_BADGES = [
