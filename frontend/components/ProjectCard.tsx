@@ -8,7 +8,7 @@ type Project = {
 };
 
 export default function ProjectCard({ project }: { project: Project }) {
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   return (
     <div className="rounded-2xl bg-white/90 p-5 shadow-sm">
