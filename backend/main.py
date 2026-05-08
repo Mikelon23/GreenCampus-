@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from backend.config.settings import settings
 from backend.api import (
     actions_router,
     admin_router,
@@ -12,6 +13,7 @@ from backend.api import (
     carbon_router,
     ecoverse_router,
     hackathons_router,
+    iot_router,
     leaderboard_router,
     points_router,
     projects_router,
@@ -25,11 +27,17 @@ from backend.api import (
 
 app = FastAPI(title="GreenCampus+ API", version="0.1.0")
 
+cors_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    settings.frontend_url,
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=list(dict.fromkeys(origin for origin in cors_origins if origin)),
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -45,6 +53,7 @@ app.include_router(points_router)
 app.include_router(leaderboard_router)
 app.include_router(badges_router)
 app.include_router(hackathons_router)
+app.include_router(iot_router)
 app.include_router(teams_router)
 app.include_router(projects_router)
 app.include_router(trees_router)

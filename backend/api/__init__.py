@@ -5,6 +5,7 @@ from backend.api.badges import router as badges_router
 from backend.api.carbon import router as carbon_router
 from backend.api.ecoverse import router as ecoverse_router
 from backend.api.hackathons import router as hackathons_router
+from backend.api.iot import router as iot_router
 from backend.api.leaderboard import router as leaderboard_router
 from backend.api.points import router as points_router
 from backend.api.projects import router as projects_router
@@ -23,6 +24,7 @@ __all__ = [
     "carbon_router",
     "ecoverse_router",
     "hackathons_router",
+    "iot_router",
     "leaderboard_router",
     "points_router",
     "projects_router",
