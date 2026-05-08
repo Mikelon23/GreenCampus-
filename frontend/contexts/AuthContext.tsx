@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { User, api } from "../services/api";
+import type { User } from "../services/api";
 
 interface AuthContextType {
   user: User | null;
@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check for saved token and user on mount
     const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
-    if (savedToken && savedUser) {
+    if (savedToken && savedToken !== "null" && savedUser && savedUser !== "null") {
       setToken(savedToken);
       setUser(JSON.parse(savedUser));
     }
@@ -35,11 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Token Expiry (60 mins): keep React auth state and localStorage in sync after forced logout.
     setToken(null);
     setUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   };
+
+  useEffect(() => {
+    const handleForcedLogout = () => logout();
+    window.addEventListener("auth:logout", handleForcedLogout);
+    return () => window.removeEventListener("auth:logout", handleForcedLogout);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>

@@ -71,6 +71,7 @@ export default function ForestPage() {
         title="Eco Forest"
         subtitle="Ant-Forest-inspired game loops for daily green habits, social energy, and campus impact."
       />
+      {error ? <div className="mb-6 rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
       {!user ? (
         <div className="rounded-3xl bg-white/90 p-8 text-center shadow-sm">
           <p className="text-campus-700">Sign in to generate energy, grow your tree, and join campus goals.</p>
@@ -88,7 +89,6 @@ export default function ForestPage() {
               animation: floatBubble 4s ease-in-out infinite;
             }
           `}</style>
-          {error ? <div className="mb-6 rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
           <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
             <div className="space-y-6">
               <div className={`relative min-h-[420px] rounded-[2rem] bg-gradient-to-br ${stageStyles[overview.tree.stage] || stageStyles.seed} p-8 shadow-xl overflow-hidden`}>
@@ -260,7 +260,11 @@ export default function ForestPage() {
             </div>
           </div>
         </>
-      ) : null}
+      ) : (
+        <div className="rounded-3xl bg-white/90 p-8 text-center shadow-sm">
+          <p className="text-campus-700">Eco Forest data is not available right now.</p>
+        </div>
+      )}
     </Layout>
   );
 }

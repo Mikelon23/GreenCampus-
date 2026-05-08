@@ -10,7 +10,7 @@ const links = [
   { href: "/points", label: "Green Points" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/map", label: "Campus Map" },
-  { href: "/hackathons", label: "GreenHack Hub" },
+  { href: "/hackathons", label: "GreenHack Hub", hidden: true },
   { href: "/admin", label: "Admin Panel", adminOnly: true },
   { href: "/about", label: "About" }
 ];
@@ -21,7 +21,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const visibleLinks = useMemo(
-    () => links.filter((link) => !link.adminOnly || user?.role?.toLowerCase() === "admin"),
+    () => links.filter((link) => !link.hidden && (!link.adminOnly || user?.role?.toLowerCase() === "admin")),
     [user]
   );
 
